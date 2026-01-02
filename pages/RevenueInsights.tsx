@@ -1,201 +1,201 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MOCK_REVENUE } from '../constants';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { DollarSign, UserPlus, TrendingDown, Layers, ChevronRight, Zap, Download, X } from 'lucide-react';
-import { useToast } from '../components/Layout';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area } from 'recharts';
+import { DollarSign, UserPlus, TrendingDown, Layers, ChevronRight, Zap, Download, X, TrendingUp, Info, Loader2 } from 'lucide-react';
+// Import useUI from App instead of useToast from Layout
+import { useUI } from '../App';
 
-const COLORS = ['#f26522', '#6366f1', '#94a3b8', '#cbd5e1'];
+const SYSTEM_TINTS = ['#007AFF', '#AF52DE', '#FF2D55', '#5AC8FA'];
 
 const RevenueInsights: React.FC = () => {
-  const { showToast } = useToast();
+  // Use useUI to get showToast and triggerHaptic
+  const { showToast, triggerHaptic } = useUI();
   const [multiplier, setMultiplier] = useState(0);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [activePlanFilter, setActivePlanFilter] = useState<string | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
 
   const handleRunSimulation = () => {
     setIsSimulating(true);
+    triggerHaptic('heavy');
     setTimeout(() => {
       setIsSimulating(false);
-      showToast("Simulation complete: Confidence 94%");
+      showToast("Simulated Complete");
     }, 1500);
   };
 
-  const handleExport = () => {
-    setIsExporting(true);
-    showToast("Generating revenue report...");
+  const handleDownloadReport = () => {
+    setIsDownloading(true);
+    triggerHaptic('medium');
+    showToast("Preparing Revenue Report...");
+
     setTimeout(() => {
-      setIsExporting(false);
-      showToast("Revenue_Metrics_Q2.csv exported!");
-    }, 1500);
+      try {
+        const timestamp = new Date().toISOString().split('T')[0];
+        const filename = `Lucky_Orange_Revenue_Report_${timestamp}.csv`;
+        
+        // Build CSV Content
+        const headers = ['Plan Tier', 'MRR (USD)', 'Active Accounts', 'Churn Rate (%)'].join(',');
+        const rows = MOCK_REVENUE.map(metric => [
+          metric.plan,
+          metric.mrr,
+          metric.accounts,
+          metric.churnRate
+        ].join(',')).join('\n');
+        
+        const summary = [
+          '',
+          'SUMMARY',
+          `Total MRR,$842500`,
+          `Gross Churn,1.8%`,
+          `Report Generated,${new Date().toLocaleString()}`
+        ].join('\n');
+
+        const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows + "\n" + summary;
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast("Report Downloaded Successfully");
+      } catch (err) {
+        showToast("Export failed. Try again.");
+      } finally {
+        setIsDownloading(false);
+      }
+    }, 2000);
   };
 
   const estimatedImpact = (12400 + (multiplier * 500)).toLocaleString();
 
-  const filteredRevenue = useMemo(() => {
-    if (!activePlanFilter) return MOCK_REVENUE;
-    return MOCK_REVENUE.filter(r => r.plan === activePlanFilter);
-  }, [activePlanFilter]);
-
-  const onPieClick = (data: any) => {
-    const plan = data.plan;
-    if (activePlanFilter === plan) {
-      setActivePlanFilter(null);
-      showToast("Showing all plans");
-    } else {
-      setActivePlanFilter(plan);
-      showToast(`Filtering by ${plan}`);
-    }
-  };
-
   return (
-    <div className="space-y-6 pb-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-[28px] font-extrabold tracking-tight text-black">Revenue</h2>
-        <div className="flex gap-2">
-          <button 
-            onClick={handleExport}
-            className={`p-2 bg-white shadow-sm rounded-full text-[#007aff] active:scale-90 transition-all ${isExporting ? 'animate-pulse opacity-50' : ''}`}
-          >
-            <Download size={20} />
-          </button>
-          <button onClick={() => showToast("Opening fiscal reports...")} className="text-[15px] font-semibold text-[#007aff] active:opacity-50">Reports</button>
+    <div className="pb-24 apple-spring">
+      <div className="text-left mb-8 px-1 flex justify-between items-end">
+        <div>
+          <h1 className="title-large mb-1">Revenue</h1>
+          <p className="caption-2 tracking-[0.06em]">Fiscal Performance</p>
+        </div>
+        <button 
+          onClick={handleDownloadReport} 
+          disabled={isDownloading}
+          className="headline text-[#007AFF] tap-feedback flex items-center gap-2 px-4 py-2 bg-[#007AFF]/10 rounded-full transition-all hover:bg-[#007AFF]/20 disabled:opacity-50"
+        >
+          {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+          <span>{isDownloading ? 'Exporting...' : 'Reports'}</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div className="glass p-5 rounded-[20px] text-left tap-feedback cursor-pointer border-none shadow-none">
+          <span className="caption-2 mb-1 opacity-60">Total MRR</span>
+          <div className="value-large leading-tight">$842.5k</div>
+          <div className="flex items-center gap-1 font-semibold mt-2" style={{ color: 'var(--success-text)' }}>
+            <TrendingUp size={16} /> +8.2%
+          </div>
+        </div>
+        <div className="glass p-5 rounded-[20px] text-left tap-feedback cursor-pointer border-none shadow-none">
+          <span className="caption-2 mb-1 opacity-60">Gross Churn</span>
+          <div className="value-large leading-tight">1.8%</div>
+          <div className="flex items-center gap-1 font-semibold mt-2" style={{ color: 'var(--error-text)' }}>
+            <TrendingDown size={16} /> +0.2%
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white p-4 rounded-xl shadow-sm active:scale-95 transition-transform" onClick={() => showToast("Inspecting MRR breakdown")}>
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Total MRR</div>
-          <div className="text-[22px] font-black text-black leading-none">$842k</div>
-          <div className="text-[11px] font-bold text-[#34c759] mt-2">+8.2%</div>
-        </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm active:scale-95 transition-transform" onClick={() => showToast("Inspecting Churn details")}>
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Gross Churn</div>
-          <div className="text-[22px] font-black text-black leading-none">1.8%</div>
-          <div className="text-[11px] font-bold text-[#ff3b30] mt-2">+0.2%</div>
-        </div>
-      </div>
-
-      <section className="ios-card p-5">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-[15px] font-bold text-black">Plan Distribution</h3>
-          {activePlanFilter && (
-            <button onClick={() => setActivePlanFilter(null)} className="text-[11px] font-bold text-[#ff3b30] flex items-center gap-1">
-              <X size={12} /> Clear
-            </button>
-          )}
-        </div>
-        <div className="h-[180px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie 
-                data={MOCK_REVENUE} 
-                cx="50%" 
-                cy="50%" 
-                innerRadius={45} 
-                outerRadius={70} 
-                paddingAngle={4} 
-                dataKey="mrr" 
-                nameKey="plan"
-                onClick={onPieClick}
-              >
-                {MOCK_REVENUE.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={COLORS[index % COLORS.length]} 
-                    stroke={activePlanFilter === entry.plan ? '#000' : 'none'}
-                    strokeWidth={2}
-                    className="cursor-pointer outline-none"
-                  />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                formatter={(value: any) => [`$${(value / 1000).toFixed(0)}k`, 'MRR']}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="grid grid-cols-2 gap-y-3 mt-4">
-          {MOCK_REVENUE.map((item, i) => (
-            <div 
-              key={item.plan} 
-              className={`flex items-center gap-2 transition-all cursor-pointer ${activePlanFilter && activePlanFilter !== item.plan ? 'opacity-30 scale-95' : 'opacity-100'}`} 
-              onClick={() => onPieClick(item)}
-            >
-              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i] }}></div>
-              <span className="text-[12px] font-bold text-slate-700">{item.plan}</span>
-              <span className="text-[12px] font-medium text-slate-400">${(item.mrr / 1000).toFixed(0)}k</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Filtered Segment Details */}
-      {activePlanFilter && (
-        <section className="animate-in slide-in-from-bottom-2 duration-300">
-          <div className="ios-card p-4 bg-[#f26522]/5 border border-[#f26522]/10">
-            <h4 className="text-[13px] font-black uppercase text-[#f26522] mb-2 tracking-widest">{activePlanFilter} Snapshot</h4>
-            {filteredRevenue.map(r => (
-              <div key={r.plan} className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase">Accounts</div>
-                  <div className="text-[18px] font-black text-black">{r.accounts}</div>
+      <section className="glass rounded-[20px] p-6 mb-8 text-left border-none">
+        <h3 className="title-2 mb-8">Tier Distribution</h3>
+        <div className="flex flex-col items-center gap-8">
+          <div className="h-48 min-h-[192px] min-w-0 w-full max-w-[200px] relative">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+              <PieChart>
+                <Pie 
+                  data={MOCK_REVENUE} 
+                  innerRadius={60} 
+                  outerRadius={85} 
+                  paddingAngle={5} 
+                  dataKey="mrr" 
+                  animationDuration={1500}
+                >
+                  {MOCK_REVENUE.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={SYSTEM_TINTS[index % SYSTEM_TINTS.length]} stroke="none" />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="w-full grid grid-cols-2 gap-4">
+            {MOCK_REVENUE.map((item, i) => (
+              <div key={item.plan} className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: SYSTEM_TINTS[i % SYSTEM_TINTS.length] }}></div>
+                  <span className="caption-2 lowercase opacity-70">{item.plan}</span>
                 </div>
-                <div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase">Churn Rate</div>
-                  <div className="text-[18px] font-black text-[#ff3b30]">{r.churnRate}%</div>
-                </div>
+                <span className="headline text-[15px]">${(item.mrr / 1000).toFixed(0)}k</span>
               </div>
             ))}
           </div>
-        </section>
-      )}
-
-      <section className="bg-white p-6 rounded-[22px] shadow-sm border border-slate-100">
-        <div className="flex justify-between items-center mb-5">
-          <div className="flex items-center gap-2">
-            <Zap size={18} className="text-[#f26522]" />
-            <h3 className="font-extrabold text-[15px] tracking-tight text-black uppercase">Revenue Simulator</h3>
-          </div>
-          <span className="text-[9px] bg-indigo-50 text-[#007aff] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter border border-indigo-100">Beta Intelligence</span>
         </div>
+      </section>
+
+      {/* Simulator - Refined HIG Input Pattern */}
+      <section className="glass rounded-[20px] p-6 text-left border-none relative overflow-hidden group">
+        <h3 className="headline mb-6">Monte Carlo Projection</h3>
         
-        <div className="space-y-6">
-          <div>
-            <div className="flex justify-between mb-3">
-              <label className="text-[11px] font-black text-slate-400 uppercase">Recording Limits</label>
-              <span className="text-[11px] font-black text-[#f26522]">+{multiplier * 5}%</span>
+        <div className="space-y-10">
+          <div className="space-y-4">
+            <div className="flex justify-between items-baseline">
+              <label className="caption-2 opacity-70">Expansion Multiplier</label>
+              <span className="headline text-[#FF9500]">{multiplier > 0 ? '+' : ''}{multiplier * 5}% Δ</span>
             </div>
             <input 
               type="range" 
               min="-10" 
               max="20" 
               value={multiplier}
-              onChange={(e) => setMultiplier(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#f26522]" 
+              onChange={(e) => { triggerHaptic('light'); setMultiplier(parseInt(e.target.value)); }}
+              className="w-full h-1 bg-[rgba(120,120,128,0.12)] rounded-full appearance-none cursor-pointer accent-[#FF9500]" 
             />
           </div>
           
-          <div className="bg-[#f2f2f7] p-4 rounded-xl border border-slate-200 shadow-inner">
-            <div className="text-[11px] font-bold text-slate-500 mb-1">Estimated MRR Impact</div>
-            <div className="text-[24px] font-black text-[#34c759] tracking-tight">+${estimatedImpact} <span className="text-[14px] font-medium text-slate-400">/mo</span></div>
+          <div className="bg-[#000000] dark:bg-white/5 rounded-[16px] p-5 text-white">
+            <span className="caption-2 opacity-50 mb-1">Projected MRR Impact</span>
+            <div className="headline text-[34px] tracking-tight text-[#34C759]">+$<AnimatedImpact value={estimatedImpact} /></div>
+            <p className="caption-2 opacity-40 mt-2 lowercase">Confidence Interval: 94%</p>
           </div>
-          
+
           <button 
             onClick={handleRunSimulation}
             disabled={isSimulating}
-            className={`w-full py-3.5 rounded-xl font-black text-[14px] uppercase tracking-widest transition-all shadow-md active:scale-95 ${
-              isSimulating ? 'bg-slate-400 text-white animate-pulse' : 'bg-black text-white'
-            }`}
+            className={`w-full h-14 primary-button tap-feedback flex items-center justify-center gap-2 ${isSimulating ? 'opacity-50' : ''}`}
           >
-            {isSimulating ? 'Processing Simulation...' : 'Run Monte Carlo Analysis'}
+            {isSimulating ? 'Processing...' : 'Run Simulation'}
           </button>
         </div>
       </section>
     </div>
   );
+};
+
+const AnimatedImpact: React.FC<{ value: string }> = ({ value }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+  const numericVal = parseFloat(value.replace(/,/g, '')) || 0;
+  useEffect(() => {
+    let start = 0;
+    const duration = 1000;
+    const startTime = performance.now();
+    const update = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      setDisplayValue(progress * numericVal);
+      if (progress < 1) requestAnimationFrame(update);
+    };
+    requestAnimationFrame(update);
+  }, [numericVal]);
+  return <>{displayValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</>;
 };
 
 export default RevenueInsights;

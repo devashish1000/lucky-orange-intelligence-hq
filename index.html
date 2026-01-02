@@ -9,79 +9,210 @@
     <meta name="apple-mobile-web-app-title" content="LO Intelligence">
     <title>Lucky Orange Intelligence HQ</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
       :root {
-        --lucky-orange: #f26522;
-        --ios-bg: #f9fafb; /* Lighter background for better contrast */
-        --ios-card: #ffffff;
-        --primary: #0066cc;
-        --text-secondary: #6b7280;
+        /* Apple System Colors - Light */
+        --system-orange: #FF9500;
+        --system-blue: #007AFF;
+        --system-green: #34C759;
+        --system-red: #FF3B30;
+        --system-yellow: #FFCC00;
+        
+        /* Text Contrast - Light Mode */
+        --text-primary: #000000;
+        --text-secondary: rgba(60, 60, 67, 0.85); /* Slightly darker for better contrast */
+        --text-tertiary: rgba(60, 60, 67, 0.65);
+        --text-quaternary: rgba(60, 60, 67, 0.45);
+        
+        /* Semantic Colors for Status */
+        --success-text: #1E7D32; /* WCAG AA on light backgrounds */
+        --error-text: #D70015;
+
+        /* Layout Variables - Light */
+        --ios-bg: #F2F2F7;
+        --ios-card: rgba(255, 255, 255, 0.85);
+        --separator: rgba(60, 60, 67, 0.15);
+        --ios-tab-bg: rgba(249, 249, 249, 0.94);
+        --ios-modal-bg: #FFFFFF;
       }
+
+      /* Manual Dark Mode Class */
+      html.dark {
+        /* Text Contrast - Dark Mode */
+        --text-primary: #FFFFFF;
+        --text-secondary: rgba(235, 235, 245, 0.85); /* Increased opacity for WCAG AA */
+        --text-tertiary: rgba(235, 235, 245, 0.70);
+        --text-quaternary: rgba(235, 235, 245, 0.50);
+
+        --success-text: #32D74B;
+        --error-text: #FF453A;
+
+        /* Layout Variables - Dark */
+        --ios-bg: #000000;
+        --ios-card: rgba(28, 28, 30, 0.92);
+        --separator: rgba(84, 84, 88, 0.65);
+        --ios-tab-bg: rgba(28, 28, 28, 0.94);
+        --ios-modal-bg: #1C1C1E;
+        
+        /* Optimized colors for dark context */
+        --system-blue: #409CFF; /* Slightly brighter for better contrast against dark backgrounds */
+        --system-orange: #FF9F0A;
+      }
+
       body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
         background-color: var(--ios-bg);
-        color: #111827;
+        color: var(--text-primary);
         -webkit-tap-highlight-color: transparent;
-        overscroll-behavior-y: none;
+        overscroll-behavior-y: contain;
         user-select: none;
-        line-height: 1.6;
+        line-height: 1.29;
+        overflow-x: hidden;
+        transition: background-color 0.3s ease, color 0.3s ease;
       }
+
       .safe-top { padding-top: env(safe-area-inset-top); }
       .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
       
-      /* Smooth native-like transitions */
-      .page-transition {
-        animation: slideUp 0.3s ease-out;
-      }
-      @keyframes slideUp {
-        from { transform: translateY(10px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-      }
-
-      /* Glassmorphism */
       .glass {
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        background-color: rgba(255, 255, 255, 0.85);
-      }
-
-      /* Scrollbars */
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 4px;
-        display: block;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: rgba(0,0,0,0.1);
-        border-radius: 10px;
-      }
-
-      /* iOS Button States */
-      button:active {
-        opacity: 0.7;
-        transform: scale(0.97);
-      }
-      
-      .ios-card {
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
         background: var(--ios-card);
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        border: 1px solid rgba(0,0,0,0.03);
+        border: 0.5px solid var(--separator);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+        transition: background 0.3s ease, border-color 0.3s ease;
       }
 
-      /* Typography & Focus */
-      h1, h2, h3 { letter-spacing: -0.02em; }
-      button:focus-visible {
-        outline: 2px solid var(--primary);
-        outline-offset: 2px;
+      /* Typography HIG Standards */
+      .title-large {
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: -0.4px;
+        color: var(--text-primary);
+        white-space: nowrap;
       }
 
-      /* Responsive Helpers */
-      @media (max-width: 480px) {
-        .mobile-stack { flex-direction: column; }
-        .mobile-grid-1 { grid-template-columns: 1fr; }
+      .title-2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.26px;
+        color: var(--text-primary);
+      }
+
+      .headline {
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: -0.41px;
+        color: var(--text-primary);
+      }
+
+      .body-text {
+        font-size: 17px;
+        font-weight: 400;
+        letter-spacing: -0.41px;
+        line-height: 1.29;
+        color: var(--text-secondary);
+      }
+
+      .caption-2 {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+
+      .value-large {
+        font-size: 48px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        color: var(--text-primary);
+        white-space: nowrap;
+      }
+
+      .apple-spring {
+        transition: all 0.35s cubic-bezier(0.36, 0.66, 0.04, 1);
+      }
+
+      .tap-feedback:active {
+        transform: scale(0.97);
+        opacity: 0.8;
+        transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .primary-button {
+        background: linear-gradient(180deg, #007AFF 0%, #0051D5 100%);
+        border-radius: 14px;
+        height: 56px;
+        color: white;
+        font-weight: 600;
+        font-size: 17px;
+        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        white-space: nowrap;
+        padding: 0 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .secondary-button {
+        background: rgba(120, 120, 128, 0.15);
+        border-radius: 12px;
+        height: 44px;
+        color: var(--system-blue);
+        font-weight: 600;
+        font-size: 17px;
+        white-space: nowrap;
+        padding: 0 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      html.dark .secondary-button {
+        background: rgba(120, 120, 128, 0.35);
+        color: var(--system-blue);
+      }
+
+      .search-bar-ios {
+        background: rgba(120, 120, 128, 0.15);
+        border-radius: 10px;
+        height: 36px;
+        color: var(--text-primary);
+      }
+
+      .filter-chip {
+        background: rgba(120, 120, 128, 0.15);
+        color: var(--text-secondary);
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-width: fit-content;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 16px;
+      }
+      html.dark .filter-chip {
+        background: rgba(120, 120, 128, 0.35);
+        color: var(--text-primary);
+      }
+
+      .badge-warning {
+        background: rgba(255, 159, 10, 0.25);
+        color: #8A4B00;
+        white-space: nowrap;
+      }
+      html.dark .badge-warning { 
+        background: rgba(255, 159, 10, 0.30);
+        color: #FFD60A; 
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
     </style>
     <script type="importmap">
@@ -100,6 +231,5 @@
   </head>
   <body>
     <div id="root"></div>
-        <script type="module" src="/index.tsx"></script>
   </body>
 </html>
